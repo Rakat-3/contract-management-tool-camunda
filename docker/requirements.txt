@@ -1,0 +1,4 @@
+requests
+pyodbc
+camunda-external-task-client-python3
+pydantic

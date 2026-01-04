@@ -1,0 +1,31 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# ---- Added: OS deps + Microsoft ODBC Driver 18 for Azure SQL (required for pyodbc) ----
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl gnupg2 apt-transport-https ca-certificates \
+    unixodbc unixodbc-dev \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install dependencies
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /app/requirements.txt
+
+# Copy the new storage workers
+COPY worker_store_create_contract.py /app/worker_store_create_contract.py
+COPY worker_store_contract.py /app/worker_store_contract.py
+COPY worker_store_reject_contract.py /app/worker_store_reject_contract.py
+COPY email_worker.py /app/email_worker.py
+
+# Start the worker (default stays the same; other services override via docker-compose "command")
+CMD ["python", "-u", "/app/email_worker.py"]

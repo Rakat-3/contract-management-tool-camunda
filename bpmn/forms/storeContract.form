@@ -1,0 +1,67 @@
+{
+  "components": [
+    {
+      "label": "Employee Name",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_0t4t4dd",
+        "columns": null
+      },
+      "id": "Field_01wvo9o",
+      "key": "employeeName",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Final Price",
+      "type": "number",
+      "layout": {
+        "row": "Row_0d8yevx",
+        "columns": null
+      },
+      "id": "Field_01lvtef",
+      "key": "finalPrice",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Office Address",
+      "type": "textfield",
+      "layout": {
+        "row": "Row_1pa1pt8",
+        "columns": null
+      },
+      "id": "Field_0ewv62d",
+      "key": "officeAddress",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "subtype": "date",
+      "dateLabel": "Signed Date",
+      "type": "datetime",
+      "layout": {
+        "row": "Row_1bk0j4a",
+        "columns": null
+      },
+      "id": "Field_1x3agf5",
+      "key": "signeddate",
+      "validate": {
+        "required": true
+      },
+      "disallowPassedDates": true
+    }
+  ],
+  "type": "default",
+  "id": "storeContract",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.41.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

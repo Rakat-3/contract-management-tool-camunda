@@ -1,0 +1,178 @@
+{
+  "components": [
+    {
+      "text": "### 1. Original Contract Draft\nThese are the requirements set by the Procurement Manager during initiation.",
+      "type": "text",
+      "layout": {
+        "row": "Row_0",
+        "columns": null
+      },
+      "id": "Text_Draft_Header"
+    },
+    {
+      "label": "Contract Title",
+      "type": "textfield",
+      "id": "Field_Title_Read",
+      "key": "contractTitle",
+      "disabled": true,
+      "layout": {
+        "row": "Row_1",
+        "columns": null
+      }
+    },
+    {
+      "label": "Required Budget (€)",
+      "type": "number",
+      "id": "Field_Budget_Read",
+      "key": "budget",
+      "disabled": true,
+      "layout": {
+        "row": "Row_2",
+        "columns": null
+      }
+    },
+    {
+      "label": "Required Skills",
+      "type": "textarea",
+      "id": "Field_Skills_Read",
+      "key": "skills",
+      "disabled": true,
+      "layout": {
+        "row": "Row_3",
+        "columns": null
+      }
+    },
+    {
+      "type": "separator",
+      "id": "Separator_1",
+      "layout": {
+        "row": "Row_4",
+        "columns": null
+      }
+    },
+    {
+      "text": "### 2. Provider's Offer Details",
+      "type": "text",
+      "layout": {
+        "row": "Row_5",
+        "columns": null
+      },
+      "id": "Text_Offer_Header"
+    },
+    {
+      "text": "#### ⚠️ No offer made by provider till now\n*Please refresh the Tasklist once the provider has submitted their offer via API.*",
+      "type": "text",
+      "layout": {
+        "row": "Row_No_Offer",
+        "columns": null
+      },
+      "id": "Text_No_Offer_Message",
+      "conditional": {
+        "hide": "=providersName != null"
+      }
+    },
+    {
+      "label": "Provider Name",
+      "type": "textfield",
+      "id": "Field_ProvidersName",
+      "key": "providersName",
+      "disabled": true,
+      "layout": {
+        "row": "Row_6",
+        "columns": null
+      },
+      "conditional": {
+        "hide": "=providersName == null"
+      }
+    },
+    {
+      "label": "Provider's Budget Offer",
+      "type": "number",
+      "id": "Field_ProvidersBudget",
+      "key": "providersBudget",
+      "disabled": true,
+      "layout": {
+        "row": "Row_7",
+        "columns": null
+      },
+      "conditional": {
+        "hide": "=providersName == null"
+      }
+    },
+    {
+      "label": "Provider's Comments",
+      "type": "textarea",
+      "id": "Field_ProvidersComment",
+      "key": "providersComment",
+      "disabled": true,
+      "layout": {
+        "row": "Row_8",
+        "columns": null
+      },
+      "conditional": {
+        "hide": "=providersName == null"
+      }
+    },
+    {
+      "label": "Meets Requirements?",
+      "type": "textfield",
+      "id": "Field_MeetRequirement",
+      "key": "meetRequirement",
+      "disabled": true,
+      "layout": {
+        "row": "Row_9",
+        "columns": null
+      },
+      "conditional": {
+        "hide": "=providersName == null"
+      }
+    },
+    {
+      "type": "separator",
+      "id": "Separator_2",
+      "layout": {
+        "row": "Row_10",
+        "columns": null
+      }
+    },
+    {
+      "label": "Action",
+      "values": [
+        {
+          "label": "Forward to Legal",
+          "value": "forward"
+        },
+        {
+          "label": "Need Clarification (Loop Back)",
+          "value": "clarify"
+        }
+      ],
+      "type": "radio",
+      "id": "Field_Action",
+      "key": "pmAction",
+      "layout": {
+        "row": "Row_11",
+        "columns": null
+      }
+    },
+    {
+      "label": "PM Review Comments",
+      "type": "textarea",
+      "id": "Field_PMComment",
+      "key": "pmComment",
+      "layout": {
+        "row": "Row_12",
+        "columns": null
+      }
+    }
+  ],
+  "type": "default",
+  "id": "reviewOffers",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.41.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

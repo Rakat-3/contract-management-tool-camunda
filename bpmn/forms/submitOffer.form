@@ -1,0 +1,70 @@
+{
+  "components": [
+    {
+      "label": "Meet Requirements?",
+      "values": [
+        {
+          "label": "Yes",
+          "value": "yes"
+        },
+        {
+          "label": "No",
+          "value": "no"
+        }
+      ],
+      "type": "select",
+      "layout": {
+        "row": "Row_0k02w34",
+        "columns": null
+      },
+      "id": "Field_07g658q",
+      "key": "meetrequirement",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Offer Price (€)",
+      "type": "number",
+      "layout": {
+        "row": "Row_1rzfbu6",
+        "columns": null
+      },
+      "id": "Field_0h2gc9q",
+      "key": "offerprice",
+      "description": "offer your price",
+      "validate": {
+        "required": true
+      }
+    },
+    {
+      "label": "Offer Summary",
+      "type": "textarea",
+      "layout": {
+        "row": "Row_0q52cyc",
+        "columns": null
+      },
+      "id": "Field_02nj8qp",
+      "key": "offersummary"
+    },
+    {
+      "label": "Submit Offer",
+      "action": "submit",
+      "type": "button",
+      "layout": {
+        "row": "Row_1hxdsru",
+        "columns": null
+      },
+      "id": "Field_1a5f8m8"
+    }
+  ],
+  "type": "default",
+  "id": "submitOffer",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.41.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "7.24.0",
+  "schemaVersion": 19
+}

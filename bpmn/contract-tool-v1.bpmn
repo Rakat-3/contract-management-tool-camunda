@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_12809zh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.42.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:process id="contractTool" name="Contract Tool" isExecutable="true" camunda:historyTimeToLive="60">
+    <bpmn:startEvent id="StartEvent_1" name="Start" camunda:initiator="requestedBy">
+      <bpmn:outgoing>Flow_Start</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <!-- 1. Draft Contract (PM) -->
+    <bpmn:userTask id="PM_Draft_Contract" name="Draft Contract (PM)" camunda:assignee="${requestedBy}" camunda:formRef="contractDraft" camunda:formRefBinding="latest">
+      <bpmn:incoming>Flow_Start</bpmn:incoming>
+      <bpmn:incoming>Flow_Loop_Back</bpmn:incoming>
+      <bpmn:outgoing>Flow_Draft_To_Store</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <!-- 2. Store Initial Draft -->
+    <bpmn:serviceTask id="Store_Initial_Draft" name="Store Initial Draft" camunda:type="external" camunda:topic="store-create-contract">
+      <bpmn:incoming>Flow_Draft_To_Store</bpmn:incoming>
+      <bpmn:outgoing>Flow_Store_To_Notify_Provider</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- 3. Notify Provider Manager -->
+    <bpmn:serviceTask id="Notify_Provider_Manager" name="Notify Provider Manager" camunda:asyncBefore="true" camunda:type="external" camunda:topic="notify-provider-manager">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="toEmail">provider@local.com</camunda:inputParameter>
+          <camunda:inputParameter name="subject">Action Required: New Contract Requirements Available</camunda:inputParameter>
+          <camunda:inputParameter name="body">
+            &lt;div style="font-family: Arial, sans-serif; color: #333;"&gt;
+              &lt;h2 style="color: #2c3e50;"&gt;New Requirement Notification&lt;/h2&gt;
+              &lt;p&gt;Dear Provider Manager,&lt;/p&gt;
+              &lt;p&gt;I have new contract requirements that need your attention. Please check your system to provide an offer.&lt;/p&gt;
+              &lt;div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 5px solid #3498db;"&gt;
+                &lt;strong&gt;Contract ID:&lt;/strong&gt; ${contractId}&lt;br&gt;
+                &lt;strong&gt;Title:&lt;/strong&gt; ${contractTitle}
+              &lt;/div&gt;
+              &lt;p&gt;Best Regards,&lt;br&gt;Procurement Team&lt;/p&gt;
+            &lt;/div&gt;
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Store_To_Notify_Provider</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notify_To_Review_Offers</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- 4. Review Provider Offers (PM) -->
+    <bpmn:userTask id="PM_Review_Offers" name="Review Provider Offers (PM)" camunda:assignee="${requestedBy}" camunda:formRef="reviewOffers" camunda:formRefBinding="latest">
+      <bpmn:documentation>Wait for provider offer (patch API) and review it before forwarding to Legal.</bpmn:documentation>
+      <bpmn:incoming>Flow_Notify_To_Review_Offers</bpmn:incoming>
+      <bpmn:outgoing>Flow_Review_To_Notify_Legal</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <!-- 5. Notify Legal Counsel -->
+    <bpmn:serviceTask id="Notify_Legal" name="Notify Legal" camunda:asyncBefore="true" camunda:type="external" camunda:topic="notify-legal">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="toEmail">legal@local.com</camunda:inputParameter>
+          <camunda:inputParameter name="subject">Contract ${contractTitle} Ready for Legal Review</camunda:inputParameter>
+          <camunda:inputParameter name="body">Hi Legal Team, Procurement has reviewed the provider offers for ${contractTitle} and forwarded it for your approval.</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Review_To_Notify_Legal</bpmn:incoming>
+      <bpmn:outgoing>Flow_Notify_To_Legal_Review</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- 6. Legal Review -->
+    <bpmn:userTask id="Legal_Review" name="Legal Review" camunda:assignee="lcuser" camunda:formRef="reviewContract" camunda:formRefBinding="latest">
+      <bpmn:incoming>Flow_Notify_To_Legal_Review</bpmn:incoming>
+      <bpmn:outgoing>Flow_Legal_To_Decision</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:exclusiveGateway id="Gateway_Legal_Decision" name="Approved?">
+      <bpmn:incoming>Flow_Legal_To_Decision</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Declined</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <!-- 7a. Approve Flow -->
+    <bpmn:sequenceFlow id="Flow_Approved" name="Approve" sourceRef="Gateway_Legal_Decision" targetRef="CA_Finalize_Storage">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approvaldecision == "approve"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:userTask id="CA_Finalize_Storage" name="CA Finalize Storage" camunda:assignee="causer" camunda:formRef="storeContract" camunda:formRefBinding="latest">
+      <bpmn:documentation>Final step for CA person to review and store the approved contract.</bpmn:documentation>
+      <bpmn:incoming>Flow_Approved</bpmn:incoming>
+      <bpmn:outgoing>Flow_CA_To_Store_DB</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:serviceTask id="Store_Contract_Final" name="Update DB (Approved)" camunda:type="external" camunda:topic="store-contract">
+      <bpmn:incoming>Flow_CA_To_Store_DB</bpmn:incoming>
+      <bpmn:outgoing>Flow_End</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <bpmn:endEvent id="EndEvent_Final" name="End">
+      <bpmn:incoming>Flow_End</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <!-- 7b. Decline Flow -->
+    <bpmn:sequenceFlow id="Flow_Declined" name="Decline" sourceRef="Gateway_Legal_Decision" targetRef="Store_Reject_DB">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approvaldecision == "decline"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:serviceTask id="Store_Reject_DB" name="Update DB (Rejected)" camunda:type="external" camunda:topic="store-reject-contract">
+      <bpmn:incoming>Flow_Declined</bpmn:incoming>
+      <bpmn:outgoing>Flow_Loop_Back</bpmn:outgoing>
+    </bpmn:serviceTask>
+    
+    <!-- Flow Definitions -->
+    <bpmn:sequenceFlow id="Flow_Start" sourceRef="StartEvent_1" targetRef="PM_Draft_Contract" />
+    <bpmn:sequenceFlow id="Flow_Draft_To_Store" sourceRef="PM_Draft_Contract" targetRef="Store_Initial_Draft" />
+    <bpmn:sequenceFlow id="Flow_Store_To_Notify_Provider" sourceRef="Store_Initial_Draft" targetRef="Notify_Provider_Manager" />
+    <bpmn:sequenceFlow id="Flow_Notify_To_Review_Offers" sourceRef="Notify_Provider_Manager" targetRef="PM_Review_Offers" />
+    <bpmn:sequenceFlow id="Flow_Review_To_Notify_Legal" sourceRef="PM_Review_Offers" targetRef="Notify_Legal" />
+    <bpmn:sequenceFlow id="Flow_Notify_To_Legal_Review" sourceRef="Notify_Legal" targetRef="Legal_Review" />
+    <bpmn:sequenceFlow id="Flow_Legal_To_Decision" sourceRef="Legal_Review" targetRef="Gateway_Legal_Decision" />
+    <bpmn:sequenceFlow id="Flow_CA_To_Store_DB" sourceRef="CA_Finalize_Storage" targetRef="Store_Contract_Final" />
+    <bpmn:sequenceFlow id="Flow_End" sourceRef="Store_Contract_Final" targetRef="EndEvent_Final" />
+    <bpmn:sequenceFlow id="Flow_Loop_Back" sourceRef="Store_Reject_DB" targetRef="PM_Draft_Contract" />
+
+  </bpmn:process>
+  
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="contractTool">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="PM_Draft_Contract_di" bpmnElement="PM_Draft_Contract">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Store_Initial_Draft_di" bpmnElement="Store_Initial_Draft">
+        <dc:Bounds x="390" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Notify_Provider_Manager_di" bpmnElement="Notify_Provider_Manager">
+        <dc:Bounds x="540" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="PM_Review_Offers_di" bpmnElement="PM_Review_Offers">
+        <dc:Bounds x="690" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Notify_Legal_di" bpmnElement="Notify_Legal">
+        <dc:Bounds x="840" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Legal_Review_di" bpmnElement="Legal_Review">
+        <dc:Bounds x="990" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Legal_Decision_di" bpmnElement="Gateway_Legal_Decision" isMarkerVisible="true">
+        <dc:Bounds x="1145" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CA_Finalize_Storage_di" bpmnElement="CA_Finalize_Storage">
+        <dc:Bounds x="1250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Store_Contract_Final_di" bpmnElement="Store_Contract_Final">
+        <dc:Bounds x="1400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Final_di" bpmnElement="EndEvent_Final">
+        <dc:Bounds x="1552" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Store_Reject_DB_di" bpmnElement="Store_Reject_DB">
+        <dc:Bounds x="1120" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNEdge id="Flow_Start_di" bpmnElement="Flow_Start">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Draft_To_Store_di" bpmnElement="Flow_Draft_To_Store">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="390" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Store_To_Notify_Provider_di" bpmnElement="Flow_Store_To_Notify_Provider">
+        <di:waypoint x="490" y="120" />
+        <di:waypoint x="540" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notify_To_Review_Offers_di" bpmnElement="Flow_Notify_To_Review_Offers">
+        <di:waypoint x="640" y="120" />
+        <di:waypoint x="690" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Review_To_Notify_Legal_di" bpmnElement="Flow_Review_To_Notify_Legal">
+        <di:waypoint x="790" y="120" />
+        <di:waypoint x="840" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Notify_To_Legal_Review_di" bpmnElement="Flow_Notify_To_Legal_Review">
+        <di:waypoint x="940" y="120" />
+        <di:waypoint x="990" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Legal_To_Decision_di" bpmnElement="Flow_Legal_To_Decision">
+        <di:waypoint x="1090" y="120" />
+        <di:waypoint x="1145" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Approved_di" bpmnElement="Flow_Approved">
+        <di:waypoint x="1195" y="120" />
+        <di:waypoint x="1250" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CA_To_Store_DB_di" bpmnElement="Flow_CA_To_Store_DB">
+        <di:waypoint x="1350" y="120" />
+        <di:waypoint x="1400" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_End_di" bpmnElement="Flow_End">
+        <di:waypoint x="1500" y="120" />
+        <di:waypoint x="1552" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Declined_di" bpmnElement="Flow_Declined">
+        <di:waypoint x="1170" y="145" />
+        <di:waypoint x="1170" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Loop_Back_di" bpmnElement="Flow_Loop_Back">
+        <di:waypoint x="1120" y="260" />
+        <di:waypoint x="290" y="260" />
+        <di:waypoint x="290" y="160" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
