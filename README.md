@@ -85,5 +85,32 @@ Retrieves a list of active contracts assigned to providers with `Submitted` or `
 ### `PATCH /api/providers/contracts/{id}`
 Allows providers to submit their budget, comments, and confirmation of requirements.
 
+
+#### Not Organized
+'''
+
+{
+  "providersBudget": 7500,
+  "providersComment": "Price includes priority support and implementation.",
+  "meetRequirement": "Yes"
+}
+
+PATCH http://localhost:8000/api/providers/contracts/{contract_id}
+
+
+http://localhost:8000/api/providers/contracts
+
+
+
+
+Procurement Manager (PM)	pm_user	pm
+Legal Counsel (LC)	lc_user	lc
+Contract Administrator (CA)	ca_user	ca
+
+20604eedcefd3bafc39e31b590dda114761a57c5
+
+'''
+
+
 ---
 *Developed for professional contract lifecycle management.*
